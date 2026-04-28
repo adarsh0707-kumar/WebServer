@@ -3,9 +3,21 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <thread>
-#include<sstream>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
+
+string read_file(const string& path){
+    ifstream file(path);
+    if(!file.is_open()){
+        return "";
+    }
+
+    string content((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+
+    return content;
+}
 
 void handle_client(int client_socket)
 {
@@ -15,7 +27,7 @@ void handle_client(int client_socket)
 
     string request(buffer);
 
-    //Extract first line of the request
+    // Extract first line of the request
 
     istringstream stream(request);
     string method, path, version;
@@ -25,17 +37,24 @@ void handle_client(int client_socket)
 
     string response;
 
-    if(path == "/"){
-        response =
-            "HTTP/1.1 200 OK\nContent-Type: text/html\n\n"
-            "<h1>Home Page<h1>";
+    string file_path = "./www";
+
+    if (path == "/")
+    {
+        file_path += "/index.html";
     }
-    else if(path == "/about"){
-        response =
-            "HTTP/1.1 200 OK\nContent-Type: text/html\n\n"
-            "<h1>About Page<h1>";
+    else
+    {
+        file_path += path + ".html";
     }
-    else{
+
+    string body = read_file(file_path);
+    if(!body.empty()){
+        response =
+            "HTTP/1.1 200 OK\nContent-Type: text/html\n\n" + body;
+    }
+    else
+    {
         response =
             "HTTP/1.1 200 OK\nContent-Type: text/html\n\n"
             "<h1>404 Not Found</h1>";
