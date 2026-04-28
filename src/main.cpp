@@ -5,12 +5,41 @@
 #include <thread>
 #include <sstream>
 #include <fstream>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <vector>
+#include "../inc/handler.h"
+#include "../inc/server.h"
 
 using namespace std;
 
-string read_file(const string& path){
+queue<int> client_queue;
+mutex queue_mutex;
+condition_variable cv;
+
+void worker()
+{
+    while (true)
+    {
+        int client_socket;
+        {
+            unique_lock<mutex> lock(queue_mutex);
+
+            cv.wait(lock, []
+                    { return !client_queue.empty(); });
+            client_socket = client_queue.front();
+            client_queue.pop();
+        }
+        handle_client(client_socket);
+    }
+}
+
+string read_file(const string &path)
+{
     ifstream file(path);
-    if(!file.is_open()){
+    if (!file.is_open())
+    {
         return "";
     }
 
@@ -37,7 +66,7 @@ void handle_client(int client_socket)
 
     string response;
 
-    string file_path = "./www";
+    string file_path = "../www";
 
     if (path == "/")
     {
@@ -49,7 +78,8 @@ void handle_client(int client_socket)
     }
 
     string body = read_file(file_path);
-    if(!body.empty()){
+    if (!body.empty())
+    {
         response =
             "HTTP/1.1 200 OK\nContent-Type: text/html\n\n" + body;
     }
@@ -77,6 +107,14 @@ int main()
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(8080);
 
+    const int THREAD_COUNT = 4;
+    vector<thread> pool;
+
+    for (int i = 0; i < THREAD_COUNT; i++)
+    {
+        pool.emplace_back(worker);
+    }
+
     bind(server_fd, (struct sockaddr *)&address, addrlen);
 
     listen(server_fd, 10);
@@ -87,8 +125,11 @@ int main()
     {
         int client_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 
-        thread t(handle_client, client_socket);
-        t.detach();
+        {
+            lock_guard<mutex> lock(queue_mutex);
+            client_queue.push(client_socket);
+            cv.notify_one();
+        }
     }
 
     close(server_fd);
