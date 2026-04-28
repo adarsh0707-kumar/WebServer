@@ -48,6 +48,24 @@ string read_file(const string &path)
     return content;
 }
 
+void log(const string& message){
+    time_t now = time(nullptr);
+    log_file << ctime(&now) << " : "<< message << endl;
+}
+
+void load_config(){
+    ifstream file("../config.txt");
+    string line;
+
+    while (true)
+    {
+        auto pos = line.find('=');
+        if(pos != string::npos){
+            config[line.substr(0, pos)] = line.substr(pos + 1);
+        }
+    }
+}
+
 void handle_client(int client_socket)
 {
     char buffer[30000] = {0};
@@ -76,7 +94,7 @@ void handle_client(int client_socket)
     {
         file_path += path + ".html";
     }
-
+    log("New request: " + path);
     string body = read_file(file_path);
     if (!body.empty())
     {
