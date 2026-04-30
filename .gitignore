@@ -1,19 +1,46 @@
 # Build artifacts
 build/
+*.o
+*.a
+*.so
+*.exe
 server
 
+# Executable files
+*.out
+
 # Logs
+*.log
 server.log
 
-# Editor files
+# IDE and Editor files
+.vscode/
+.idea/
 *.swp
 *.swo
 *.tmp
 *.bak
 *.orig
-
-# macOS
+*~
 .DS_Store
 
-# Temporary files
-*.log
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Configuration files (if containing secrets)
+config.local.txt
+.env
+.env.local
+
+# Temporary development files
+.tmp/
+*.temp
+
+# Compiler output
+*.gch
