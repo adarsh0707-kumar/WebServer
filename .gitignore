@@ -1,0 +1,19 @@
+# Build artifacts
+build/
+server
+
+# Logs
+server.log
+
+# Editor files
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.log
